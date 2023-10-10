@@ -1,0 +1,24 @@
+{
+  "name": "noirder-book",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "@aztec/aztec.js": "^0.8.8",
+    "@aztec/cli": "^0.8.8",
+    "@aztec/noir-contracts": "^0.8.8",
+    "@types/node": "^20.8.4",
+    "@typescript-eslint/eslint-plugin": "^6.7.5",
+    "@typescript-eslint/parser": "^6.7.5",
+    "eslint": "^8.51.0",
+    "typescript": "^5.2.2"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "yarn clean && tsc -b",
+    "build:dev": "tsc -b --watch",
+    "clean": "rm -rf ./dest tsconfig.tsbuildinfo",
+    "start": "yarn build && DEBUG='token' node ./dest/index.js"
+  }
+}
