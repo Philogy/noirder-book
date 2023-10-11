@@ -50,7 +50,6 @@ contract Token {
         minters: Map<PublicState<bool, BOOL_SERIALIZED_LEN>>,
         balances: BalancesMap,
         total_supply: PublicState<SafeU120, SAFE_U120_SERIALIZED_LEN>,
-        pending_shields: Set<TransparentNote, TRANSPARENT_NOTE_LEN>,
         public_balances: Map<PublicState<SafeU120, SAFE_U120_SERIALIZED_LEN>>,
     }
 
@@ -79,10 +78,9 @@ contract Token {
                     4,
                     SafeU120SerializationMethods,
                 ),
-                pending_shields: Set::new(context, 5, TransparentNoteMethods),
                 public_balances: Map::new(
                     context,
-                    6,
+                    5,
                     |context, slot| {
                         PublicState::new(
                             context,
@@ -137,20 +135,19 @@ contract Token {
         1
     }
 
-    #[aztec(public)]
+    #[aztec(private)]
     fn mint_private(
-        amount: Field,
-        secret_hash: Field,
+        to: AztecAddress,
+        amount: Field
     ) -> Field {
         assert(
             storage.minters.at(context.msg_sender()).read()
             | storage.admin.read().eq(AztecAddress::new(context.msg_sender())),
             "caller is not minter"
         );
-        let pending_shields = storage.pending_shields;
-        let mut note = TransparentNote::new(amount, secret_hash);
 
-        pending_shields.insert_from_public(&mut note);
+        storage.balances.at(to).add(SafeU120::new(amount));
+
         1
     }
 
@@ -199,46 +196,6 @@ contract Token {
         1
     }
 
-    #[aztec(public)]
-    fn burn_public(
-        from: AztecAddress,
-        amount: Field,
-        nonce: Field,
-    ) -> Field {
-        if (from.address != context.msg_sender()) {
-            assert_current_call_valid_authwit_public(&mut context, from);
-        } else {
-            assert(nonce == 0, "invalid nonce");
-        }
-
-        let amount = SafeU120::new(amount);
-        let from_balance = storage.public_balances.at(from.address).read().sub(amount);
-        storage.public_balances.at(from.address).write(from_balance);
-
-        let new_supply = storage.total_supply.read().sub(amount);
-        storage.total_supply.write(new_supply);
-
-        1
-    }
-
-    #[aztec(private)]
-    fn redeem_shield(
-        to: AztecAddress,
-        amount: Field,
-        secret: Field,
-    ) -> Field {
-        let pending_shields = storage.pending_shields;
-        let secret_hash = compute_secret_hash(secret);
-        let options = NoteGetterOptions::new().select(0, amount).select(1, secret_hash).set_limit(1);
-        let notes = pending_shields.get_notes(options);
-        let note = notes[0].unwrap_unchecked();
-        pending_shields.remove(note);
-
-        storage.balances.at(to).add(SafeU120::new(amount));
-
-        1
-    }
-
     #[aztec(private)]
     fn unshield(
         from: AztecAddress,
@@ -276,23 +233,6 @@ contract Token {
         let amount = SafeU120::new(amount);
         storage.balances.at(from).sub(amount);
         storage.balances.at(to).add(amount);
-
-        1
-    }
-
-    #[aztec(private)]
-    fn burn(
-        from: AztecAddress,
-        amount: Field,
-        nonce: Field,
-    ) -> Field {
-        if (from.address != context.msg_sender()) {
-            assert_current_call_valid_authwit(&mut context, from);
-        } else {
-            assert(nonce == 0, "invalid nonce");
-        }
-
-        storage.balances.at(from).sub(SafeU120::new(amount));
 
         1
     }
@@ -360,12 +300,8 @@ contract Token {
     // Computes note hash and nullifier.
     // Note 1: Needs to be defined by every contract producing logs.
     // Note 2: Having it in all the contracts gives us the ability to compute the note hash and nullifier differently for different kind of notes.
-    unconstrained fn compute_note_hash_and_nullifier(contract_address: Field, nonce: Field, storage_slot: Field, preimage: [Field; TOKEN_NOTE_LEN]) -> [Field; 4] {
-        let note_header = NoteHeader::new(contract_address, nonce, storage_slot);
-        if (storage_slot == 5) {
-            note_utils::compute_note_hash_and_nullifier(TransparentNoteMethods, note_header, preimage)
-        } else {
-            note_utils::compute_note_hash_and_nullifier(TokenNoteMethods, note_header, preimage)
-        }
+    unconstrained fn compute_note_hash_and_nullifier(contract_address: Field, nonce: Field, preimage: [Field; TOKEN_NOTE_LEN]) -> [Field; 4] {
+        let note_header = NoteHeader::new(contract_address, nonce, 3);
+        note_utils::compute_note_hash_and_nullifier(TokenNoteMethods, note_header, preimage)
     }
 }

@@ -1,13 +1,10 @@
 // src/contracts.mjs
 import { readFileSync } from 'fs'
 import {
-  Fr,
   Wallet,
   PXE,
-  NotePreimage,
   createPXEClient,
   getSandboxAccountsWallets,
-  computeMessageSecretHash,
   AztecAddress
 } from '@aztec/aztec.js'
 import { TokenContract } from './types/token/Token.js'
@@ -44,27 +41,12 @@ async function mintPrivateFunds(pxe: PXE) {
   await showPrivateBalances(pxe)
 
   const mintAmount = 20n
-  const secret = Fr.random()
-  const secretHash = await computeMessageSecretHash(secret)
   const receipt = await token.methods
-    .mint_private(mintAmount, secretHash)
+    .mint_private(owner.getAddress(), mintAmount)
     .send()
     .wait()
 
-  const storageSlot = new Fr(5)
-  const preimage = new NotePreimage([new Fr(mintAmount), secretHash])
-  await pxe.addNote(
-    owner.getAddress(),
-    token.address,
-    storageSlot,
-    preimage,
-    receipt.txHash
-  )
-
-  await token.methods
-    .redeem_shield(owner.getAddress(), mintAmount, secret)
-    .send()
-    .wait()
+  console.log(`Minted ${mintAmount} at ${receipt.txHash.toString()}`)
 
   await showPrivateBalances(pxe)
 }
