@@ -18,6 +18,7 @@
   "scripts": {
     "build": "yarn clean && tsc -b",
     "build:dev": "tsc -b --watch",
+    "compile": "yarn aztec-cli compile contracts/token --typescript ../../src/types/token --outdir ../../src/target/token",
     "clean": "rm -rf ./dest tsconfig.tsbuildinfo",
     "start": "yarn build && DEBUG='token' node ./dest/index.js"
   }
