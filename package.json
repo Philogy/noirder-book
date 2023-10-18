@@ -8,18 +8,30 @@
     "@aztec/aztec.js": "^0.8.8",
     "@aztec/cli": "^0.8.8",
     "@aztec/noir-contracts": "^0.8.8",
+    "@babel/core": "^7.23.2",
+    "@babel/preset-env": "^7.23.2",
+    "@babel/preset-typescript": "^7.23.2",
+    "@jest/globals": "^29.7.0",
+    "@types/jest": "^29.5.6",
     "@types/node": "^20.8.4",
     "@typescript-eslint/eslint-plugin": "^6.7.5",
     "@typescript-eslint/parser": "^6.7.5",
+    "babel-jest": "^29.7.0",
     "eslint": "^8.51.0",
+    "eslint-plugin-prettier": "^5.0.1",
+    "jest": "^29.7.0",
+    "prettier": "^3.0.3",
+    "ts-jest": "^29.1.1",
     "typescript": "^5.2.2"
   },
   "type": "module",
   "scripts": {
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "build": "yarn clean && tsc -b",
     "build:dev": "tsc -b --watch",
-    "compile": "yarn aztec-cli compile contracts/token --typescript ../../src/types/token --outdir ../../src/target/token",
+    "compile": "./scripts/compile.sh",
     "clean": "rm -rf ./dest tsconfig.tsbuildinfo",
+    "lint": "prettier **/*.ts **/*.js src/**/*.json **/*.cjs  -w",
     "start": "yarn build && DEBUG='token' node ./dest/index.js"
   }
 }

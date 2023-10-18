@@ -140,10 +140,11 @@ contract Token {
         to: AztecAddress,
         amount: Field
     ) -> Field {
-        assert(
-            storage.minters.at(context.msg_sender()).read()
-            | storage.admin.read().eq(AztecAddress::new(context.msg_sender())),
-            "caller is not minter"
+        let selector = compute_selector("_auth_minter((Field))");
+        let _void = context.call_public_function(
+            context.this_address(),
+            selector,
+            [context.msg_sender()]
         );
 
         storage.balances.at(to).add(SafeU120::new(amount));
@@ -159,7 +160,6 @@ contract Token {
         nonce: Field,
     ) -> Field {
         if (from.address != context.msg_sender()) {
-            // The redeem is only spendable once, so we need to ensure that you cannot insert multiple shields from the same message.
             assert_current_call_valid_authwit(&mut context, from);
         } else {
             assert(nonce == 0, "invalid nonce");
@@ -264,6 +264,16 @@ contract Token {
         let amount = SafeU120::new(amount);
         let from_balance = storage.public_balances.at(from.address).read().sub(amount);
         storage.public_balances.at(from.address).write(from_balance);
+    }
+
+    #[aztec(public)]
+    internal fn _auth_minter(minter: AztecAddress) {
+        assert(
+            storage.minters.at(minter.address).read()
+            | storage.admin.read().eq(minter),
+            "caller is not minter"
+        );
+
     }
 
     /// Unconstrained ///

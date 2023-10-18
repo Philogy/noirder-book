@@ -14,7 +14,7 @@ const { PXE_URL = 'http://localhost:8080' } = process.env
 export async function getToken(client: Wallet) {
   const addresses = JSON.parse(readFileSync('addresses.json').toString())
   return await TokenContract.at(
-    AztecAddress.fromString(addresses.token),
+    AztecAddress.fromString(addresses.token0),
     client
   )
 }
@@ -76,15 +76,12 @@ async function shieldFunds(pxe: PXE) {
 
   console.log('attempting shield')
 
-  const pending = token.methods
+  const receipt = await token.methods
     .shield(owner.getAddress(), to.getAddress(), 3n, 0)
     .send()
+    .wait()
 
-  const txHash = await pending.getTxHash()
-  console.log('txHash:', txHash)
-
-  const receipt = await pending.wait()
-  console.log('txhash:', receipt.txHash)
+  console.log('txhash:', receipt.txHash.toString())
 
   await showPrivateBalances(pxe)
 }
@@ -92,13 +89,13 @@ async function shieldFunds(pxe: PXE) {
 async function main() {
   const pxe = createPXEClient(PXE_URL)
 
-  await mintPrivateFunds(pxe)
-
   await mintPublic(pxe)
 
-  console.log('mint done')
-
   await shieldFunds(pxe)
+
+  await mintPrivateFunds(pxe)
+
+  console.log('mint done')
 }
 
 main()

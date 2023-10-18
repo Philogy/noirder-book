@@ -16,6 +16,8 @@ use dep::aztec::oracle::{
     get_public_key::get_public_key,
 };
 
+use dep::std::hash::pedersen;
+
 use dep::safe_math::SafeU120;
 use dep::std::option::Option;
 
@@ -60,8 +62,8 @@ impl TokenNote {
 
     pub fn compute_note_hash(self) -> Field {
         // TODO(#1205) Should use a non-zero generator index.
-        dep::std::hash::pedersen([
-            self.amount.value as Field, 
+        pedersen([
+            self.amount.value as Field,
             self.owner.address as Field,
             self.randomness,
         ])[0]
@@ -71,7 +73,7 @@ impl TokenNote {
         let note_hash_for_nullify = compute_note_hash_for_read_or_nullify(TokenNoteMethods, self);
         let secret = get_secret_key(self.owner.address);
         // TODO(#1205) Should use a non-zero generator index.
-        dep::std::hash::pedersen([
+        pedersen([
             note_hash_for_nullify,
             secret.low,
             secret.high,

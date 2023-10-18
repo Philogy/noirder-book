@@ -65,6 +65,9 @@ export class TokenContract extends ContractBase {
   /** Type-safe wrappers for the public methods exposed by the contract. */
   public methods!: {
     
+    /** _auth_minter(minter: struct) */
+    _auth_minter: ((minter: AztecAddressLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
+
     /** _decrease_public_balance(from: struct, amount: field) */
     _decrease_public_balance: ((from: AztecAddressLike, amount: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
