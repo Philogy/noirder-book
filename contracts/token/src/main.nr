@@ -13,12 +13,15 @@ contract Token {
 
     use dep::safe_math::SafeU120;
 
+    use dep::std::println;
+
     use dep::aztec::{
         note::{
             note_getter_options::NoteGetterOptions,
             note_header::NoteHeader,
             utils as note_utils,
         },
+        oracle::debug_log::debug_log_oracle,
         context::{PrivateContext, PublicContext, Context},
         hash::{compute_secret_hash},
         state_vars::{map::Map, public_state::PublicState, set::Set},
@@ -168,7 +171,11 @@ contract Token {
         let selector = compute_selector("_decrease_public_balance((Field),Field)");
         let _void = context.call_public_function(context.this_address(), selector, [from.address, amount]);
 
+        // debug_log_oracle(storage.balances.at(to).balance_of().value as Field, 1);
+
         storage.balances.at(to).add(SafeU120::new(amount));
+
+        // debug_log_oracle(storage.balances.at(to).balance_of().value as Field, 1);
 
         1
     }
