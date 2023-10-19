@@ -77,7 +77,7 @@ async function shieldFunds(pxe: PXE) {
   console.log('attempting shield')
 
   const receipt = await token.methods
-    .shield(owner.getAddress(), to.getAddress(), 3n, 0)
+    .shield(owner.getAddress(), owner.getAddress(), 3n, 0)
     .send()
     .wait()
 

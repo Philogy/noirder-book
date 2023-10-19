@@ -26,7 +26,7 @@
   },
   "type": "module",
   "scripts": {
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest src/test",
     "build": "yarn clean && tsc -b",
     "build:dev": "tsc -b --watch",
     "compile": "./scripts/compile.sh",

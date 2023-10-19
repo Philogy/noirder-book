@@ -21,6 +21,8 @@ async function main() {
   const pxe = createPXEClient(PXE_URL)
   const [owner, user1, user2] = await getSandboxAccountsWallets(pxe)
 
+  console.log('start')
+
   const deployer = deployToken(pxe, owner.getAddress())
 
   const token0 = await deployer()

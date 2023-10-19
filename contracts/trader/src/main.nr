@@ -42,7 +42,6 @@ contract Trader {
     #[aztec(private)]
     fn trade_token0(
         token0_from: AztecAddress,
-        token1_from: AztecAddress,
         amount_token0: Field,
         amount_token1: Field,
         nonce: Field,
@@ -50,18 +49,17 @@ contract Trader {
         nonce_transfer_token1: Field
     ) {
         assert_current_call_valid_authwit(&mut context, token0_from);
-        assert (token1_from.address == context.msg_sender());
 
         Token::at(storage.token0.get_note().address).transfer(
             &mut context,
             token0_from.address,
-            token1_from.address,
+            context.msg_sender(),
             amount_token0,
             nonce_transfer_token0
         );
         Token::at(storage.token1.get_note().address).transfer(
             &mut context,
-            token1_from.address,
+            context.msg_sender(),
             token0_from.address,
             amount_token1,
             nonce_transfer_token1
