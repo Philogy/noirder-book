@@ -1,6 +1,9 @@
-use dep::aztec::note::note_interface::NoteInterface;
-use dep::aztec::note::note_header::NoteHeader;
-use dep::aztec::note::utils::compute_siloed_note_hash;
+use dep::aztec::note::{
+    note_interface::NoteInterface,
+    note_header::NoteHeader,
+    utils::compute_siloed_note_hash
+};
+use dep::aztec::context::PrivateContext;
 use dep::aztec::oracle::get_secret_key::get_secret_key;
 
 global ADDRESS_NOTE_LEN: Field = 1;
@@ -61,6 +64,9 @@ fn set_header(note: &mut AddressNote, header: NoteHeader) {
     note.set_header(header);
 }
 
+// Empty broadcast to satisfy interface
+fn broadcast(context: &mut PrivateContext, slot: Field, note: AddressNote) { }
+
 global AddressNoteMethods = NoteInterface {
     deserialize,
     serialize,
@@ -68,4 +74,5 @@ global AddressNoteMethods = NoteInterface {
     compute_nullifier,
     get_header,
     set_header,
+    broadcast
 };

@@ -35,8 +35,8 @@ contract Trader {
 
     #[aztec(private)]
     fn constructor(token0: Field, token1: Field) {
-        storage.token0.initialize(&mut AddressNote::new(token0), Option::none());
-        storage.token1.initialize(&mut AddressNote::new(token1), Option::none());
+        storage.token0.initialize(&mut AddressNote::new(token0), Option::none(), true);
+        storage.token1.initialize(&mut AddressNote::new(token1), Option::none(), true);
     }
 
     #[aztec(private)]

@@ -54,7 +54,7 @@ contract Token {
     }
 
     impl Storage {
-        fn init(context: Context) -> pub Self {
+        fn init(context: Context) -> Self {
             Storage {
                 admin: PublicState::new(
                     context,

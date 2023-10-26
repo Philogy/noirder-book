@@ -84,27 +84,21 @@ impl TokenNote {
         self.header = header;
     }
 
-
-    pub fn emit_encrypted(
-        self: &mut Self,
-        context: &mut PrivateContext,
-        storage_slot: Field,
-    ) {
+    // Broadcasts the note as an encrypted log on L1.
+    pub fn broadcast(self, context: &mut PrivateContext, slot: Field) {
         // We only bother inserting the note if non-empty to save funds on gas.
         if !self.amount.is_zero() {
-            let application_contract_address = (*context).this_address();
             let encryption_pub_key = get_public_key(self.owner.address);
-            let encrypted_data = (*self).serialize();
-
             emit_encrypted_log(
                 context,
-                application_contract_address,
-                storage_slot,
+                (*context).this_address(),
+                slot,
                 encryption_pub_key,
-                encrypted_data,
+                self.serialize(),
             );
         }
     }
+
 }
 
 fn deserialize(preimage: [Field; TOKEN_NOTE_LEN]) -> TokenNote {
@@ -131,6 +125,10 @@ fn set_header(note: &mut TokenNote, header: NoteHeader) {
     note.set_header(header)
 }
 
+fn broadcast(context: &mut PrivateContext, slot: Field, note: TokenNote) {
+    note.broadcast(context, slot);
+}
+
 global TokenNoteMethods = NoteInterface {
     deserialize,
     serialize,
@@ -138,4 +136,5 @@ global TokenNoteMethods = NoteInterface {
     compute_nullifier,
     get_header,
     set_header,
+    broadcast
 };

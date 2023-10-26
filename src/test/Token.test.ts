@@ -1,9 +1,9 @@
-import { Fr } from '@aztec/foundation/fields'
 import {
   createPXEClient,
   PXE,
   getSandboxAccountsWallets,
-  AccountWalletWithPrivateKey
+  AccountWalletWithPrivateKey,
+  Wallet
 } from '@aztec/aztec.js'
 import { TokenContract } from '../types/token/Token.js'
 
@@ -28,7 +28,7 @@ describe('Token', () => {
 
     owner = wallets[0]
 
-    token = await TokenContract.deploy(pxe, owner.getAddress())
+    token = await TokenContract.deploy(pxe as Wallet, owner.getAddress())
       .send()
       .deployed()
   })
