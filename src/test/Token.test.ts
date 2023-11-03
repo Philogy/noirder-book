@@ -3,7 +3,9 @@ import {
   PXE,
   getSandboxAccountsWallets,
   AccountWalletWithPrivateKey,
-  Wallet
+  Wallet,
+  Fr,
+  computeAuthWitMessageHash
 } from '@aztec/aztec.js'
 import { TokenContract } from '../types/token/Token.js'
 
@@ -96,5 +98,66 @@ describe('Token', () => {
       .view()
 
     expect(afterBal).toEqual(prevBal + amount)
+  })
+
+  it('transfer with authwit', async () => {
+    const [alice, bob] = wallets
+
+    await token
+      .withWallet(owner)
+      .methods.mint_private(alice.getAddress(), 1000n)
+      .send()
+      .wait()
+
+    const amount = 200n
+
+    const prevBalAlice = await (await getTokenFor(alice)).methods
+      .balance_of_private(alice.getAddress())
+      .view()
+
+    const prevBalBob = await (await getTokenFor(bob)).methods
+      .balance_of_private(bob.getAddress())
+      .view()
+
+    const aliceTransferNonce = Fr.random()
+    const aliceTransferHash = Fr.fromBuffer(
+      await computeAuthWitMessageHash(
+        bob.getAddress(),
+        token
+          .withWallet(wallets[wallets.length - 1])
+          .methods.transfer(
+            alice.getAddress(),
+            bob.getAddress(),
+            amount,
+            aliceTransferNonce
+          )
+          .request()
+      )
+    )
+
+    const authwit = await alice.createAuthWitness(aliceTransferHash)
+    await bob.addAuthWitness(authwit)
+
+    await (await getTokenFor(bob)).methods
+      .transfer(
+        alice.getAddress(),
+        bob.getAddress(),
+        amount,
+        aliceTransferNonce
+      )
+      .send({})
+      .wait()
+
+    const afterBalAlice = await (await getTokenFor(alice)).methods
+      .balance_of_private(alice.getAddress())
+      .view()
+
+    expect(afterBalAlice).toEqual(prevBalAlice - amount)
+
+    const afterBalBob = await (await getTokenFor(bob)).methods
+      .balance_of_private(bob.getAddress())
+      .view()
+
+    expect(afterBalBob).toEqual(prevBalBob + amount)
   })
 })

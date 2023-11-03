@@ -8,10 +8,19 @@ contract Trader {
     use dep::aztec::{
         state_vars::immutable_singleton::ImmutableSingleton,
         context::{PrivateContext, PublicContext, Context},
-        types::address::AztecAddress
+        types::address::AztecAddress,
+        note::{
+            utils as note_utils,
+            note_header::NoteHeader
+        }
     };
 
     use dep::authwit::auth::assert_current_call_valid_authwit;
+
+    use dep::aztec::oracle::debug_log::{
+        debug_log_field,
+        debug_log_array_with_prefix
+    };
 
     use crate::{
         address_note::{AddressNote, ADDRESS_NOTE_LEN, AddressNoteMethods},
@@ -48,21 +57,36 @@ contract Trader {
         nonce_transfer_token0: Field,
         nonce_transfer_token1: Field
     ) {
+        let token0_addr = storage.token0.get_note().address;
+        let token1_addr = storage.token1.get_note().address;
+
         assert_current_call_valid_authwit(&mut context, token0_from);
 
-        Token::at(storage.token0.get_note().address).transfer(
+
+        Token::at(token0_addr).transfer(
             &mut context,
             token0_from.address,
             context.msg_sender(),
             amount_token0,
             nonce_transfer_token0
         );
-        Token::at(storage.token1.get_note().address).transfer(
+        Token::at(token1_addr).transfer(
             &mut context,
             context.msg_sender(),
             token0_from.address,
             amount_token1,
             nonce_transfer_token1
         );
+    }
+
+
+    unconstrained fn compute_note_hash_and_nullifier(
+        contract_address: Field,
+        nonce: Field,
+        storage_slot: Field,
+        preimage: [Field; ADDRESS_NOTE_LEN],
+    ) -> [Field; 4] {
+        let note_header = NoteHeader { contract_address, nonce, storage_slot, is_transient: false };
+        note_utils::compute_note_hash_and_nullifier(AddressNoteMethods, note_header, preimage)
     }
 }

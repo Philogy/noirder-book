@@ -5,19 +5,24 @@ import {
   getSandboxAccountsWallets,
   AccountWalletWithPrivateKey,
   Wallet,
-  computeAuthWitMessageHash
+  computeAuthWitMessageHash,
+  Note,
+  ExtendedNote,
+  DeployTxReceipt,
+  AztecAddress
 } from '@aztec/aztec.js'
 import { TokenContract } from '../types/token/Token.js'
 import { TraderContract } from '../types/trader/Trader.js'
 
 const { PXE_URL = 'http://localhost:8080' } = process.env
 
-describe('Token', () => {
+describe('Trader', () => {
   let pxe: PXE
   let wallets: AccountWalletWithPrivateKey[]
   let owner: AccountWalletWithPrivateKey
   let token: TokenContract[]
   let trader: TraderContract
+  let deployReceipt: DeployTxReceipt
 
   beforeAll(async () => {
     token = new Array(2)
@@ -35,13 +40,43 @@ describe('Token', () => {
       .send()
       .deployed()
 
-    trader = await TraderContract.deploy(
+    const tx = TraderContract.deploy(
       pxe as Wallet,
       token[0].address,
       token[1].address
+    ).send()
+
+    deployReceipt = await tx.wait()
+    trader = await tx.deployed()
+
+    async function addTraderTokenNote(
+      token: AztecAddress,
+      storageSlot: Fr,
+      wallet: AccountWalletWithPrivateKey
+    ): Promise<void> {
+      const extendNote = new ExtendedNote(
+        new Note([token.toField()]),
+        wallet.getAddress(),
+        trader.address,
+        storageSlot,
+        deployReceipt.txHash
+      )
+      await wallet.addNote(extendNote)
+    }
+
+    await Promise.all(
+      [0, 1].map((tokenIndex) => {
+        Promise.all(
+          wallets.map((wallet) =>
+            addTraderTokenNote(
+              token[tokenIndex].address,
+              new Fr(tokenIndex + 1),
+              wallet
+            )
+          )
+        )
+      })
     )
-      .send()
-      .deployed()
 
     await Promise.all(
       wallets.map((wallet) =>
@@ -58,7 +93,7 @@ describe('Token', () => {
     )
   })
 
-  it('basic trade', async () => {
+  it.only('basic trade', async () => {
     const [, alice, bob] = wallets
 
     const aliceAmountOut = 200n
@@ -110,7 +145,10 @@ describe('Token', () => {
 
     await Promise.all(
       [aliceTransferAuthwit, bobTransferAuthwit, aliceTradeAuthwit].map(
-        (authwit) => bob.addAuthWitness(authwit)
+        async (authwit) => {
+          bob.addAuthWitness(authwit)
+          pxe.addAuthWitness(authwit)
+        }
       )
     )
 
@@ -126,11 +164,6 @@ describe('Token', () => {
     const prevBob1 = await token[1].methods
       .balance_of_private(bob.getAddress())
       .view()
-
-    console.log('prevAlice0:', prevAlice0)
-    console.log(`prevAlice1: ${prevAlice1}`)
-    console.log(`prevBob0: ${prevBob0}`)
-    console.log(`prevBob1: ${prevBob1}`)
 
     await trade.send().wait()
 

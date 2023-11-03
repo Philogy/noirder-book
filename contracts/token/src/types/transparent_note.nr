@@ -112,7 +112,7 @@ fn set_header(note: &mut TransparentNote, header: NoteHeader) {
     note.set_header(header)
 }
 
-fn broadcast(context: &mut PrivateContext, slot: Field, note: TransparentNote) {
+fn broadcast(_context: &mut PrivateContext, _slot: Field, _note: TransparentNote) {
     assert(false, "TransparentNote does not support broadcast");
 }
 
